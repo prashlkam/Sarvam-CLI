@@ -16,7 +16,8 @@
     "dev:temporary": "bun run --conditions=browser ./src/temporary.ts"
   },
   "bin": {
-    "opencode": "./bin/opencode"
+    "sarvam-cli": "./bin/opencode",
+    "sarvam": "./bin/opencode"
   },
   "exports": {
     "./*": "./src/*.ts"

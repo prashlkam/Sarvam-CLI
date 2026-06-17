@@ -304,7 +304,7 @@ export const ProvidersLoginCommand = effectCmd({
   builder: (yargs: Argv) =>
     yargs
       .positional("url", {
-        describe: "opencode auth provider",
+        describe: "sarvam-cli auth provider",
         type: "string",
       })
       .option("provider", {
@@ -369,13 +369,14 @@ export const ProvidersLoginCommand = effectCmd({
     const hooks = yield* pluginSvc.list()
 
     const priority: Record<string, number> = {
-      opencode: 0,
-      openai: 1,
-      "github-copilot": 2,
-      google: 3,
-      anthropic: 4,
-      openrouter: 5,
-      vercel: 6,
+      sarvam: 0,
+      opencode: 1,
+      openai: 2,
+      "github-copilot": 3,
+      google: 4,
+      anthropic: 5,
+      openrouter: 6,
+      vercel: 7,
     }
     const pluginProviders = resolvePluginProviders({
       hooks,
@@ -396,7 +397,8 @@ export const ProvidersLoginCommand = effectCmd({
           label: x.name,
           value: x.id,
           hint: {
-            opencode: "recommended",
+            sarvam: "recommended",
+            opencode: "free models",
             openai: "ChatGPT Plus/Pro or API key",
           }[x.id],
         })),
@@ -461,6 +463,10 @@ export const ProvidersLoginCommand = effectCmd({
           "Configure via opencode.json options (profile, region, endpoint) or\n" +
           "AWS environment variables (AWS_PROFILE, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_WEB_IDENTITY_TOKEN_FILE).",
       )
+    }
+
+    if (provider === "sarvam") {
+      yield* Prompt.log.info("Create an API key (sk_...) at https://dashboard.sarvam.ai")
     }
 
     if (provider === "opencode") {

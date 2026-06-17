@@ -1,13 +1,6 @@
-<p align="center">
-  <a href="https://opencode.ai">
-    <picture>
-      <source srcset="packages/console/app/src/asset/logo-ornate-dark.svg" media="(prefers-color-scheme: dark)">
-      <source srcset="packages/console/app/src/asset/logo-ornate-light.svg" media="(prefers-color-scheme: light)">
-      <img src="packages/console/app/src/asset/logo-ornate-light.svg" alt="OpenCode logo">
-    </picture>
-  </a>
-</p>
-<p align="center">The open source AI coding agent.</p>
+<p align="center">Sarvam CLI</p>
+<p align="center">An AI coding agent for the terminal, powered by Sarvam AI by default.</p>
+<p align="center"><sub>A fork of <a href="https://opencode.ai">opencode</a>, rebranded and preconfigured for Sarvam AI.</sub></p>
 <p align="center">
   <a href="https://opencode.ai/discord"><img alt="Discord" src="https://img.shields.io/discord/1391832426048651334?style=flat-square&label=discord" /></a>
   <a href="https://www.npmjs.com/package/opencode-ai"><img alt="npm" src="https://img.shields.io/npm/v/opencode-ai?style=flat-square" /></a>
@@ -39,67 +32,55 @@
   <a href="README.vi.md">Tiếng Việt</a>
 </p>
 
-[![OpenCode Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://opencode.ai)
+[![Sarvam CLI Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://opencode.ai)
 
 ---
 
-### Installation
+### Build from source
 
 ```bash
-# YOLO
-curl -fsSL https://opencode.ai/install | bash
+# Install dependencies (requires Bun)
+bun install
 
-# Package managers
-npm i -g opencode-ai@latest        # or bun/pnpm/yarn
-scoop install opencode             # Windows
-choco install opencode             # Windows
-brew install anomalyco/tap/opencode # macOS and Linux (recommended, always up to date)
-brew install opencode              # macOS and Linux (official brew formula, updated less)
-sudo pacman -S opencode            # Arch Linux (Stable)
-paru -S opencode-bin               # Arch Linux (Latest from AUR)
-mise use -g opencode               # Any OS
-nix run nixpkgs#opencode           # or github:anomalyco/opencode for latest dev branch
+# Build the single-file binary for your platform
+bun run --cwd packages/opencode script/build.ts --single
+
+# The binary is emitted to:
+#   packages/opencode/dist/<platform>/bin/sarvam-cli
 ```
 
-> [!TIP]
-> Remove versions older than 0.1.x before installing.
-
-### Desktop App (BETA)
-
-OpenCode is also available as a desktop application. Download directly from the [releases page](https://github.com/anomalyco/opencode/releases) or [opencode.ai/download](https://opencode.ai/download).
-
-| Platform              | Download                           |
-| --------------------- | ---------------------------------- |
-| macOS (Apple Silicon) | `opencode-desktop-mac-arm64.dmg`   |
-| macOS (Intel)         | `opencode-desktop-mac-x64.dmg`     |
-| Windows               | `opencode-desktop-windows-x64.exe` |
-| Linux                 | `.deb`, `.rpm`, or `.AppImage`     |
+Install it onto your PATH with the bundled script:
 
 ```bash
-# macOS (Homebrew)
-brew install --cask opencode-desktop
-# Windows (Scoop)
-scoop bucket add extras; scoop install extras/opencode-desktop
+./install --binary packages/opencode/dist/*/bin/sarvam-cli
 ```
 
-#### Installation Directory
+This copies the binary to `$HOME/.sarvam-cli/bin` and adds it to your PATH.
 
-The install script respects the following priority order for the installation path:
+### Quick start
 
-1. `$OPENCODE_INSTALL_DIR` - Custom installation directory
-2. `$XDG_BIN_DIR` - XDG Base Directory Specification compliant path
-3. `$HOME/bin` - Standard user binary directory (if it exists or can be created)
-4. `$HOME/.opencode/bin` - Default fallback
+Sarvam CLI defaults to Sarvam AI. Provide a key one of two ways:
 
 ```bash
-# Examples
-OPENCODE_INSTALL_DIR=/usr/local/bin curl -fsSL https://opencode.ai/install | bash
-XDG_BIN_DIR=$HOME/.local/bin curl -fsSL https://opencode.ai/install | bash
+# Option 1: environment variable
+export SARVAM_API_KEY=sk_...
+
+# Option 2: interactive login (stores the key locally)
+sarvam-cli auth login        # choose "Sarvam AI"
+
+# then, in any project:
+cd <project>
+sarvam-cli                   # launches the TUI (alias: sarvam)
 ```
+
+Get an API key at https://dashboard.sarvam.ai. The default model is
+`sarvam/sarvam-m`; `sarvam/sarvam-30b` and `sarvam/sarvam-105b` are also
+available. All of opencode's other providers remain selectable via
+`sarvam-cli auth login`.
 
 ### Agents
 
-OpenCode includes two built-in agents you can switch between with the `Tab` key.
+Sarvam CLI includes two built-in agents you can switch between with the `Tab` key.
 
 - **build** - Default, full-access agent for development work
 - **plan** - Read-only agent for analysis and code exploration
@@ -114,16 +95,13 @@ Learn more about [agents](https://opencode.ai/docs/agents).
 
 ### Documentation
 
-For more info on how to configure OpenCode, [**head over to our docs**](https://opencode.ai/docs).
+Sarvam CLI is a fork of opencode and shares its configuration model. For general
+configuration, [**see the upstream opencode docs**](https://opencode.ai/docs).
+The Sarvam-specific defaults (provider, models, paths) are documented in
+[plan.md](./plan.md).
 
-### Contributing
+### Credits
 
-If you're interested in contributing to OpenCode, please read our [contributing docs](./CONTRIBUTING.md) before submitting a pull request.
-
-### Building on OpenCode
-
-If you are working on a project that's related to OpenCode and is using "opencode" as part of its name, for example "opencode-dashboard" or "opencode-mobile", please add a note to your README to clarify that it is not built by the OpenCode team and is not affiliated with us in any way.
-
----
-
-**Join our community** [Discord](https://discord.gg/opencode) | [X.com](https://x.com/opencode)
+Sarvam CLI is built on top of [opencode](https://opencode.ai), the open source AI
+coding agent. All credit for the underlying agent goes to the opencode team; this
+fork only rebrands it and bakes in Sarvam AI as the default provider.

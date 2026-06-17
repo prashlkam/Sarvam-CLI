@@ -28,6 +28,7 @@ import { optional } from "@opencode-ai/core/schema"
 import { ProviderTransform } from "./transform"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
+import { SARVAM_PROVIDER_ID, SARVAM_DEFAULT_MODEL_ID } from "@opencode-ai/core/sarvam"
 import { ModelStatus } from "./model-status"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { ProviderError } from "./error"
@@ -1868,6 +1869,11 @@ const layer = Layer.effect(
         }
       }
 
+      // Sarvam is the baked-in default: its small model is always sarvam-m.
+      if (providerID.startsWith(SARVAM_PROVIDER_ID) && provider.models[SARVAM_DEFAULT_MODEL_ID]) {
+        return provider.models[SARVAM_DEFAULT_MODEL_ID]
+      }
+
       // TODO: Remove these provider-specific assumptions once model syncing reliably reports available deployments.
       if (providerID === ProviderV2.ID.azure || providerID === ProviderV2.ID.make("azure-cognitive-services")) {
         return undefined
@@ -1932,6 +1938,17 @@ const layer = Layer.effect(
         if (!provider) continue
         if (!provider.models[entry.modelID]) continue
         return { providerID: entry.providerID, modelID: entry.modelID }
+      }
+
+      // Sarvam is the baked-in default: when nothing else is configured and a
+      // Sarvam credential resolved, prefer sarvam/sarvam-m before falling back
+      // to generic provider ordering.
+      const sarvam = s.providers[ProviderV2.ID.make(SARVAM_PROVIDER_ID)]
+      if (sarvam && sarvam.models[SARVAM_DEFAULT_MODEL_ID]) {
+        return {
+          providerID: sarvam.id,
+          modelID: sarvam.models[SARVAM_DEFAULT_MODEL_ID].id,
+        }
       }
 
       const configured = Object.keys(cfg.provider ?? {})
