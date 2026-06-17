@@ -16,7 +16,8 @@
     "dev:temporary": "bun run ./src/temporary.ts"
   },
   "bin": {
-    "opencode": "./bin/opencode"
+    "sarvam-cli": "./bin/opencode",
+    "sarvam": "./bin/opencode"
   },
   "exports": {
     "./*": "./src/*.ts"
