@@ -23,6 +23,7 @@ import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/unstable/
 import { EffectFlock } from "@opencode-ai/core/util/effect-flock"
 import { containsPath, type InstanceContext } from "../project/instance-context"
 import { ConfigV1 } from "@opencode-ai/core/v1/config/config"
+import { SARVAM_PROVIDER_ID, SARVAM_DEFAULT_MODEL_ID } from "@opencode-ai/core/sarvam"
 import { RemoteAuthError } from "@opencode-ai/core/v1/config/error"
 import { ConfigPermissionV1 } from "@opencode-ai/core/v1/config/permission"
 import { ConfigPluginV1 } from "@opencode-ai/core/v1/config/plugin"
@@ -314,7 +315,11 @@ const layer = Layer.effect(
       function* (ctx: InstanceContext) {
         const auth = yield* authSvc.all().pipe(Effect.orDie)
 
-        let result: Info = {}
+        // Baked-in Sarvam defaults (sarvam-cli is Sarvam-first / zero-config).
+        // Seeded as the lowest-priority base so any global or project config
+        // value for model/small_model overrides it.
+        const sarvamDefault = `${SARVAM_PROVIDER_ID}/${SARVAM_DEFAULT_MODEL_ID}`
+        let result: Info = { model: sarvamDefault, small_model: sarvamDefault }
         const authEnv: Record<string, string> = {}
         const consoleManagedProviders = new Set<string>()
         let activeOrgName: string | undefined
