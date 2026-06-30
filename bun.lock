@@ -543,7 +543,8 @@
       "name": "opencode",
       "version": "1.17.11",
       "bin": {
-        "opencode": "./bin/opencode",
+        "sarvam-cli": "./bin/opencode",
+        "sarvam": "./bin/opencode",
       },
       "dependencies": {
         "@actions/core": "1.11.1",
