@@ -8,6 +8,12 @@ export const SARVAM_PROVIDER_ID = "sarvam"
 export const SARVAM_DEFAULT_MODEL_ID = "sarvam-m"
 export const SARVAM_ENV_KEY = "SARVAM_API_KEY"
 
+// Sibling-model fallback order. When a requested Sarvam model id is missing
+// from the resolved catalog, resolution walks this chain (smallest → largest)
+// and returns the first sibling that exists, so an agentic loop degrades to a
+// valid model instead of crashing mid-task.
+export const SARVAM_FALLBACK_CHAIN = ["sarvam-m", "sarvam-30b", "sarvam-105b"] as const
+
 export const SarvamProvider: ModelsDev.Provider = {
   id: SARVAM_PROVIDER_ID,
   name: "Sarvam AI",
