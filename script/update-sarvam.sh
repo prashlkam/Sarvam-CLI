@@ -39,6 +39,16 @@
 #   SARVAM_FORK_BRANCH      (default: sarvam)
 #   SARVAM_BUILD_ARGS       (default: --single --skip-install)  full build arg override
 #
+# Cutting a release (versioning scheme):
+#   Sarvam-CLI tracks upstream opencode's version. After a successful update,
+#   read the version and push a matching tag to trigger
+#   .github/workflows/release.yml (per-platform binaries + GitHub Release, and
+#   an optional npm publish when NPM_TOKEN is configured):
+#     VER=$(node -p "require('./packages/opencode/package.json').version")
+#     git tag "v${VER}" && git push origin "v${VER}"
+#   Use an independent scheme (e.g. v0.1.0) only if the fork intentionally
+#   diverges from upstream's version line.
+#
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
