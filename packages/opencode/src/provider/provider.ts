@@ -28,7 +28,7 @@ import { optional } from "@opencode-ai/core/schema"
 import { ProviderTransform } from "./transform"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
-import { SARVAM_PROVIDER_ID, SARVAM_DEFAULT_MODEL_ID } from "@opencode-ai/core/sarvam"
+import { SARVAM_PROVIDER_ID, SARVAM_DEFAULT_MODEL_ID, SARVAM_FALLBACK_CHAIN } from "@opencode-ai/core/sarvam"
 import { ModelStatus } from "./model-status"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { ProviderError } from "./error"
@@ -1885,6 +1885,18 @@ const layer = Layer.effect(
 
       const info = provider.models[modelID]
       if (!info) {
+        // Sarvam is the baked-in default: rather than crash an agentic loop when
+        // an unknown Sarvam model id is requested, degrade to the first available
+        // sibling and warn once instead of hard-failing.
+        if (providerID.startsWith(SARVAM_PROVIDER_ID)) {
+          const sibling = SARVAM_FALLBACK_CHAIN.map((id) => provider.models[id]).find(Boolean)
+          if (sibling) {
+            yield* Effect.logWarning(
+              `Sarvam model "${modelID}" is unavailable; falling back to "${sibling.id}"`,
+            )
+            return sibling
+          }
+        }
         const current = modelSuggestions(provider, modelID, runtimeFlags.enableExperimentalModels)
         const suggestions = current.length
           ? current
