@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sarvam-cli-app"
+version = "1.17.13"
+description = "Sarvam CLI — an AI coding agent for the terminal, powered by Sarvam AI. A fork of opencode."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+authors = [{ name = "Prashanth Kamath" }]
+keywords = ["cli", "ai", "coding-assistant", "sarvam", "opencode"]
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://github.com/prashlkam/Sarvam-CLI"
+Repository = "https://github.com/prashlkam/Sarvam-CLI"
+Issues = "https://github.com/prashlkam/Sarvam-CLI/issues"
+
+[project.scripts]
+sarvam-cli = "sarvam_cli.cli:main"
+sarvam = "sarvam_cli.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sarvam_cli"]
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src", "README.md", "LICENSE"]
