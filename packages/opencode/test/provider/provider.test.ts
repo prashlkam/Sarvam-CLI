@@ -329,6 +329,19 @@ it.instance("getModel throws ModelNotFoundError for invalid provider", () =>
   }),
 )
 
+it.instance("getModel falls back to a sibling Sarvam model when the requested id is missing", () =>
+  Effect.gen(function* () {
+    yield* setProcessEnv("SARVAM_API_KEY", "sk_test")
+    const provider = yield* Provider.Service
+    const model = yield* provider.getModel(
+      ProviderV2.ID.make("sarvam"),
+      ModelV2.ID.make("sarvam-nonexistent"),
+    )
+    expect(String(model.providerID)).toBe("sarvam")
+    expect(["sarvam-m", "sarvam-30b", "sarvam-105b"]).toContain(String(model.id))
+  }),
+)
+
 // Pure synchronous unit tests — no Effect runtime needed.
 
 test("parseModel correctly parses provider/model string", () => {

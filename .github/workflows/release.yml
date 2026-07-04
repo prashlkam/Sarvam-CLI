@@ -1,0 +1,113 @@
+name: release
+
+# Cut a Sarvam CLI release by pushing a tag, e.g.:
+#   git tag v1.17.11 && git push origin v1.17.11
+#
+# Bun cross-compiles every target from a single runner, so build.ts (invoked
+# with OPENCODE_RELEASE=1) produces per-platform single-file binaries, archives
+# them, and uploads them to the GitHub Release created below.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # Only run on this fork — never on upstream opencode or unrelated forks.
+    if: github.repository == 'prashlkam/Sarvam-CLI'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Resolve version
+        id: version
+        run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release create "${GITHUB_REF_NAME}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "Sarvam CLI ${GITHUB_REF_NAME}" \
+              --generate-notes \
+              --verify-tag
+          else
+            echo "Release ${GITHUB_REF_NAME} already exists; assets will be uploaded to it."
+          fi
+
+      - name: Build all-platform binaries and upload archives
+        env:
+          OPENCODE_VERSION: ${{ steps.version.outputs.value }}
+          OPENCODE_RELEASE: "1"
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bun run --cwd packages/opencode script/build.ts
+
+      - name: Generate and upload checksums
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd packages/opencode/dist
+          sha256sum *.tar.gz *.zip > checksums.txt
+          gh release upload "${GITHUB_REF_NAME}" checksums.txt --clobber --repo "${GITHUB_REPOSITORY}"
+
+  publish-npm:
+    # Publishes the thin npm wrapper in ./npm. It self-skips unless an NPM_TOKEN
+    # repo secret is configured, so releases succeed even before npm is set up.
+    needs: release
+    if: github.repository == 'prashlkam/Sarvam-CLI'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for NPM_TOKEN
+        id: guard
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "NPM_TOKEN secret not set — skipping npm publish."
+          fi
+
+      - name: Setup Node
+        if: steps.guard.outputs.enabled == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Set wrapper version
+        if: steps.guard.outputs.enabled == 'true'
+        run: |
+          export VERSION="${GITHUB_REF_NAME#v}"
+          node -e "const f='npm/package.json';const p=require('./'+f);p.version=process.env.VERSION;require('fs').writeFileSync(f, JSON.stringify(p,null,2)+'\n')"
+
+      - name: Publish to npm
+        if: steps.guard.outputs.enabled == 'true'
+        working-directory: npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public

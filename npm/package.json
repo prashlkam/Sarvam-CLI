@@ -1,0 +1,38 @@
+{
+  "name": "sarvam-cli",
+  "version": "1.17.11",
+  "description": "Sarvam CLI — an AI coding agent for the terminal, powered by Sarvam AI. A fork of opencode.",
+  "keywords": [
+    "cli",
+    "ai",
+    "coding-assistant",
+    "sarvam",
+    "opencode"
+  ],
+  "homepage": "https://github.com/prashlkam/Sarvam-CLI",
+  "bugs": {
+    "url": "https://github.com/prashlkam/Sarvam-CLI/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prashlkam/Sarvam-CLI.git"
+  },
+  "license": "MIT",
+  "author": "Prashanth Kamath",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "sarvam-cli": "bin/sarvam-cli.mjs",
+    "sarvam": "bin/sarvam-cli.mjs"
+  },
+  "files": [
+    "bin/sarvam-cli.mjs",
+    "install.mjs"
+  ],
+  "scripts": {
+    "postinstall": "node install.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
