@@ -111,3 +111,50 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public
+
+  publish-pypi:
+    # Publishes the thin pip wrapper in ./pip. It self-skips unless a PYPI_TOKEN
+    # repo secret is configured, so releases succeed even before PyPI is set up.
+    needs: release
+    if: github.repository == 'prashlkam/Sarvam-CLI'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for PYPI_TOKEN
+        id: guard
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          if [ -n "$PYPI_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "PYPI_TOKEN secret not set — skipping PyPI publish."
+          fi
+
+      - name: Setup Python
+        if: steps.guard.outputs.enabled == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set wrapper version
+        if: steps.guard.outputs.enabled == 'true'
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" pip/pyproject.toml
+          sed -i "s/^__version__ = \".*\"/__version__ = \"$VERSION\"/" pip/src/sarvam_cli/__init__.py
+
+      - name: Publish to PyPI
+        if: steps.guard.outputs.enabled == 'true'
+        working-directory: pip
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          pip install build twine
+          python -m build
+          twine check dist/*
+          twine upload dist/*

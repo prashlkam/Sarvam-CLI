@@ -20,6 +20,19 @@ npm install -g sarvam-cli
 bunx sarvam-cli
 ```
 
+```bash
+# pipx (recommended for Python users)
+pipx install sarvam-cli-app
+
+# or plain pip
+pip install sarvam-cli-app
+```
+
+The npm and pip packages are equivalent wrappers over the same native binary —
+install one or the other, not both (both register the `sarvam-cli` / `sarvam`
+commands). The pip wrapper downloads the binary (~55 MB) on first run and
+caches it; set `SARVAM_CLI_BINARY=/path/to/binary` to skip the download.
+
 Or download a prebuilt binary from the [latest release](https://github.com/prashlkam/Sarvam-CLI/releases):
 
 ```bash
