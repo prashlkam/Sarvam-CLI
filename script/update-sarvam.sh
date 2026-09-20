@@ -225,6 +225,7 @@ markers=(
   "packages/opencode/package.json:::\"sarvam-cli\""
   "packages/tui/src/app.tsx:::setTerminalTitle(\"Sarvam CLI\")"
   "packages/tui/src/routes/session/permission.tsx:::until Sarvam CLI is restarted"
+  "packages/tui/src/feature-plugins/home/tips-view.tsx:::{highlight}sarvam-cli "
 )
 missing=()
 for m in "${markers[@]}"; do
