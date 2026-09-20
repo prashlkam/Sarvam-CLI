@@ -223,6 +223,8 @@ markers=(
   "packages/opencode/src/provider/provider.ts:::SARVAM_DEFAULT_MODEL_ID"
   "packages/opencode/src/index.ts:::scriptName(\"sarvam-cli\")"
   "packages/opencode/package.json:::\"sarvam-cli\""
+  "packages/tui/src/app.tsx:::setTerminalTitle(\"Sarvam CLI\")"
+  "packages/tui/src/routes/session/permission.tsx:::until Sarvam CLI is restarted"
 )
 missing=()
 for m in "${markers[@]}"; do
