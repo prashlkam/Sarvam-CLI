@@ -5,7 +5,7 @@
 #
 # Strategy (git-native, conflict-safe):
 #   - branch `dev`     mirrors upstream opencode (pristine, never edited)
-#   - branch `sarvam`  holds the Sarvam-CLI customizations as commits
+#   - branch `main`    holds the Sarvam-CLI customizations as commits
 #   An update fetches upstream and REBASES `sarvam` onto the new upstream tip,
 #   so every Sarvam change (provider, models, default model, config seed,
 #   rebrand, install script, README, ...) is carried forward automatically.
@@ -36,7 +36,7 @@
 #   SARVAM_UPSTREAM_REMOTE  (default: upstream)
 #   SARVAM_UPSTREAM_URL     (default: https://github.com/sst/opencode)
 #   SARVAM_UPSTREAM_BRANCH  (default: dev)
-#   SARVAM_FORK_BRANCH      (default: sarvam)
+#   SARVAM_FORK_BRANCH      (default: main)
 #   SARVAM_BUILD_ARGS       (default: --single --skip-install)  full build arg override
 #
 # Cutting a release (versioning scheme):
@@ -57,7 +57,7 @@ set -euo pipefail
 UPSTREAM_REMOTE="${SARVAM_UPSTREAM_REMOTE:-upstream}"
 UPSTREAM_URL="${SARVAM_UPSTREAM_URL:-https://github.com/sst/opencode}"
 UPSTREAM_BRANCH="${SARVAM_UPSTREAM_BRANCH:-dev}"
-FORK_BRANCH="${SARVAM_FORK_BRANCH:-sarvam}"
+FORK_BRANCH="${SARVAM_FORK_BRANCH:-main}"
 DEFAULT_BUILD_ARGS="--single --skip-install"
 
 do_check=false
