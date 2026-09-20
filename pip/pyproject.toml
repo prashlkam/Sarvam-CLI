@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sarvam-cli-app"
-version = "1.17.13"
+version = "1.18.31"
 description = "Sarvam CLI — an AI coding agent for the terminal, powered by Sarvam AI. A fork of opencode."
 readme = "README.md"
 license = "MIT"
