@@ -16,6 +16,7 @@ import { AISDKNative } from "./aisdk-native.js"
 import { Provider } from "./provider.js"
 import { Variant } from "./variant.js"
 import { KV } from "./kv.js"
+import { SARVAM_PROVIDER_ID, SarvamCatalog } from "@opencode/util/sarvam"
 import snapshotText from "./models-dev/snapshot.txt" with { type: "text" }
 import { isV1, toV2 } from "./models-dev/v1.js"
 
@@ -530,6 +531,26 @@ const bundledSnapshot = (recommended: boolean) =>
           Effect.tap((snapshot) => Effect.sync(() => bundledCache.set(recommended, snapshot))),
         )
   })
+
+// Sarvam is a baked-in provider, so it must be present no matter what the
+// network, the KV cache or the bundled snapshot produced. Normalized through
+// the same path as every models.dev entry — so it picks up native-package
+// resolution and env-key registration for free — and cached per isolate for
+// the same reason the bundled snapshot is. Sarvam wins over an upstream entry
+// of the same id.
+//
+// Applied by plugin/models-dev.ts rather than by get(), which stays a faithful
+// view of the upstream catalog. Every path that registers providers runs
+// through that plugin, so the guarantee is the same.
+//
+// SarvamCatalog is v1-shaped (it names an AI SDK package), so normalize()
+// converts it through toV2 like any v1 catalog. normalize() is an Effect only
+// for its skip-warning logs, so running it synchronously here is safe.
+let sarvamCache: readonly Snapshot[] | undefined
+export function withSarvam(snapshots: readonly Snapshot[]): readonly Snapshot[] {
+  sarvamCache ??= Effect.runSync(normalize({ [SARVAM_PROVIDER_ID]: SarvamCatalog }, false))
+  return [...snapshots.filter((item) => item.info.id !== SARVAM_PROVIDER_ID), ...sarvamCache]
+}
 
 // Versioned so an entry cached from the v1 API is never read as v2.
 function cacheKey(source: string) {

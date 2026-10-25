@@ -3,6 +3,8 @@ import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 
+const app = "sarvam-cli"
+
 describe("debug paths command", () => {
   test("is included in troubleshooting help", async () => {
     const [debug, paths] = await Promise.all([cli(["debug", "--help"]), cli(["debug", "paths", "--help"])])
@@ -32,18 +34,19 @@ describe("debug paths command", () => {
       )
 
       expect({ exitCode: result.exitCode, stderr: result.stderr }).toEqual({ exitCode: 0, stderr: "" })
+      // The fork renames the XDG app directory (packages/util/src/global.ts).
       expect(paths).toMatchObject({
         home: os.homedir(),
-        data: path.join(root, "data", "opencode"),
-        config: path.join(root, "config", "opencode"),
-        cache: path.join(root, "cache", "opencode"),
-        state: path.join(root, "state", "opencode"),
-        bin: path.join(root, "cache", "opencode", "bin"),
-        log: path.join(root, "data", "opencode", "log"),
-        repos: path.join(root, "data", "opencode", "repos"),
+        data: path.join(root, "data", app),
+        config: path.join(root, "config", app),
+        cache: path.join(root, "cache", app),
+        state: path.join(root, "state", app),
+        bin: path.join(root, "cache", app, "bin"),
+        log: path.join(root, "data", app, "log"),
+        repos: path.join(root, "data", app, "repos"),
       })
       expect(paths.tmp).toBeTruthy()
-      expect(await Bun.file(path.join(root, "state", "opencode", "service-local.json")).exists()).toBe(false)
+      expect(await Bun.file(path.join(root, "state", app, "service-local.json")).exists()).toBe(false)
     } finally {
       await fs.rm(root, { recursive: true, force: true })
     }

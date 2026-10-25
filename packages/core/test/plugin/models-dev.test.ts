@@ -796,7 +796,12 @@ describe("ModelsDevPlugin", () => {
       )
 
       yield* activate(providers)
-      const ids = (models: readonly Model.Info[]) => models.map((item) => item.id).sort()
+      // Sarvam is baked into the catalog by withSarvam, so only the fixture provider is asserted here.
+      const ids = (models: readonly Model.Info[]) =>
+        models
+          .filter((item) => item.providerID === providerID)
+          .map((item) => item.id)
+          .sort()
       expect(ids(yield* modelState.available())).toEqual(["gpt-5.5", "gpt-audio"].map((id) => Model.ID.make(id)))
       expect(ids(yield* modelState.all())).toEqual(["gpt-5.5", "gpt-audio"].map((id) => Model.ID.make(id)))
       expect(yield* modelState.get(providerID, Model.ID.make("jev-1.13"))).toBeUndefined()
@@ -828,6 +833,20 @@ describe("ModelsDevPlugin", () => {
             {
               type: "env",
               names: ["ACME_API_KEY"],
+            },
+          ],
+          connections: [],
+        }),
+        // Sarvam is baked into the catalog by withSarvam, so it is registered
+        // with env-key auth regardless of what the models.dev fixture contains.
+        Integration.Info.make({
+          id: Integration.ID.make("sarvam"),
+          name: "Sarvam AI",
+          methods: [
+            { type: "key" },
+            {
+              type: "env",
+              names: ["SARVAM_API_KEY"],
             },
           ],
           connections: [],
