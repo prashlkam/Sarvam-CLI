@@ -13,6 +13,7 @@ import { AISDKNative } from "./aisdk-native.js"
 import { Provider } from "./provider.js"
 import { Variant } from "./variant.js"
 import { KV } from "./kv.js"
+import { SARVAM_PROVIDER_ID, SarvamCatalog } from "@opencode/util/sarvam"
 import snapshotText from "./models-dev/snapshot.txt" with { type: "text" }
 
 export const CatalogModelStatus = Schema.Literals(["alpha", "beta", "deprecated"])
@@ -321,6 +322,22 @@ const bundledSnapshot = Effect.suspend(() =>
         }),
       ),
 )
+
+// Sarvam is a baked-in provider, so it must be present no matter what the
+// network, the KV cache or the bundled snapshot produced. Normalized through
+// the same path as every models.dev entry — so it picks up native-package
+// resolution and env-key registration for free — and cached per isolate for
+// the same reason the bundled snapshot is. Sarvam wins over an upstream entry
+// of the same id.
+//
+// Applied by plugin/models-dev.ts rather than by get(), which stays a faithful
+// view of the upstream catalog. Every path that registers providers runs
+// through that plugin, so the guarantee is the same.
+let sarvamCache: readonly Snapshot[] | undefined
+export function withSarvam(snapshots: readonly Snapshot[]): readonly Snapshot[] {
+  sarvamCache ??= normalize({ [SARVAM_PROVIDER_ID]: SarvamCatalog })
+  return [...snapshots.filter((item) => item.info.id !== SARVAM_PROVIDER_ID), ...sarvamCache]
+}
 
 function cacheKey(source: string) {
   if (source === defaultSource) return "models-dev:catalog"

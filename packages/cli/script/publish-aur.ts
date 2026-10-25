@@ -10,7 +10,7 @@ if (Script.channel !== "beta" && Script.channel !== "latest") {
   throw new Error("AUR publishing requires the beta or latest channel")
 }
 const name = "opencode-beta"
-const command = "opencode"
+const command = "sarvam-cli"
 const valid =
   Script.channel === "beta"
     ? /^\d+\.\d+\.\d+-beta[.-]\d+(?:\.\d+)?$/.test(Script.version)
@@ -74,7 +74,7 @@ await Bun.write(
     ...sources,
     "",
     "package() {",
-    `  install -Dm755 "$srcdir/package/bin/opencode" "$pkgdir/usr/bin/${command}"`,
+    `  install -Dm755 "$srcdir/package/bin/sarvam-cli" "$pkgdir/usr/bin/${command}"`,
     '  install -Dm755 "$srcdir/opencode2" "$pkgdir/usr/bin/opencode2"',
     '  install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"',
     "}",

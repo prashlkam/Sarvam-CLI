@@ -45,13 +45,17 @@ const PermissionParams = {
   ),
 }
 
+// The shipped command name comes from the OPENCODE_CLI_NAME build define
+// (packages/cli/script/build.ts sets it to "sarvam-cli"). The fallback below
+// only applies to unbundled dev/test runs, so it stays upstream's name — every
+// upstream test that asserts a usage or telemetry string depends on it.
 const Root = Spec.make(typeof OPENCODE_CLI_NAME === "string" ? OPENCODE_CLI_NAME : "opencode", {
-  description: "OpenCode command line interface",
+  description: "Sarvam CLI command line interface",
   params: {
     ...ServerParams,
     ...PermissionParams,
     directory: Argument.String("directory").pipe(
-      Argument.withDescription("Directory to start OpenCode in"),
+      Argument.withDescription("Directory to start Sarvam CLI in"),
       Argument.optional,
     ),
     continue: Flag.Boolean("continue").pipe(
@@ -68,7 +72,7 @@ const Root = Spec.make(typeof OPENCODE_CLI_NAME === "string" ? OPENCODE_CLI_NAME
   },
   commands: [
     Spec.make("upgrade", {
-      description: "Upgrade OpenCode to the latest or a specific version",
+      description: "Upgrade Sarvam CLI to the latest or a specific version",
       aliases: ["update"],
       params: {
         target: Argument.String("target").pipe(
@@ -83,7 +87,7 @@ const Root = Spec.make(typeof OPENCODE_CLI_NAME === "string" ? OPENCODE_CLI_NAME
       },
     }),
     Spec.make("uninstall", {
-      description: "Uninstall OpenCode, keeping session data, configuration, and state",
+      description: "Uninstall Sarvam CLI, keeping session data, configuration, and state",
       params: {
         dryRun: Flag.Boolean("dry-run").pipe(
           Flag.withDescription("Show what would be removed without removing"),
@@ -329,6 +333,11 @@ const Root = Spec.make(typeof OPENCODE_CLI_NAME === "string" ? OPENCODE_CLI_NAME
       description: "List all available models",
       globalFlags: ServerFlags,
     }),
+    Spec.make("doctor", {
+      description: "Diagnose your Sarvam CLI setup (API key, connectivity, resolved models)",
+      aliases: ["check"],
+      globalFlags: ServerFlags,
+    }),
     Spec.make("stats", {
       description: "Show shareable usage statistics",
       globalFlags: ServerFlags,
@@ -397,7 +406,7 @@ const Root = Spec.make(typeof OPENCODE_CLI_NAME === "string" ? OPENCODE_CLI_NAME
       },
     }),
     Spec.make("run", {
-      description: "Run OpenCode with a message",
+      description: "Run Sarvam CLI with a message",
       globalFlags: ServerFlags,
       params: {
         message: Argument.String("message").pipe(

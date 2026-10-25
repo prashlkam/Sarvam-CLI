@@ -206,7 +206,7 @@ const make = Effect.gen(function* () {
       new UpgradeError({
         title: "Git Bash is required to update OpenCode",
         detail: "The OpenCode installer runs with Git Bash on Windows, and it was not found.",
-        retry: "Install Git for Windows or set OPENCODE_GIT_BASH_PATH, then run opencode upgrade again.",
+        retry: "Install Git for Windows or set OPENCODE_GIT_BASH_PATH, then run sarvam-cli upgrade again.",
       }),
     )
   })
@@ -291,7 +291,7 @@ const make = Effect.gen(function* () {
           {
             title: "Could not check for OpenCode updates",
             detail: errorDetail(cause),
-            retry: "Check your network, then run opencode upgrade again.",
+            retry: "Check your network, then run sarvam-cli upgrade again.",
           },
           { cause },
         ),
@@ -338,7 +338,7 @@ const make = Effect.gen(function* () {
           title: "Could not check for OpenCode updates",
           detail,
           command: ["winget", "search", ...wingetArgs].join(" "),
-          retry: "Fix the issue above, then run opencode upgrade again.",
+          retry: "Fix the issue above, then run sarvam-cli upgrade again.",
         },
         cause === undefined ? undefined : { cause },
       )
@@ -401,7 +401,7 @@ const make = Effect.gen(function* () {
           title: input.title ?? `${installNames[input.method]} could not install OpenCode`,
           detail,
           command: (input.displayCommand ?? input.command).join(" "),
-          retry: input.retry ?? "Fix the issue above, then run opencode upgrade again.",
+          retry: input.retry ?? "Fix the issue above, then run sarvam-cli upgrade again.",
         },
         cause === undefined ? undefined : { cause },
       )
@@ -482,7 +482,7 @@ const make = Effect.gen(function* () {
             command: ["curl", "-fsSL", "-o", installer, "https://opencode.ai/v2/install"],
             displayCommand: ["curl", "-fsSL", "https://opencode.ai/v2/install"],
             title: "Could not download the OpenCode installer",
-            retry: "Check your network, then run opencode upgrade again.",
+            retry: "Check your network, then run sarvam-cli upgrade again.",
           })
           return yield* retaining(
             method,
@@ -521,7 +521,7 @@ const make = Effect.gen(function* () {
               {
                 title: "Could not prepare the OpenCode upgrade",
                 detail: errorDetail(cause),
-                retry: "Fix the issue above, then run opencode upgrade again.",
+                retry: "Fix the issue above, then run sarvam-cli upgrade again.",
               },
               { cause },
             ),

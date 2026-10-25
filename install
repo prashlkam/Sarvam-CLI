@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-APP=opencode
-SOURCE_APP=opencode
+APP=sarvam-cli
+SOURCE_APP=sarvam-cli
+REPO=prashlkam/Sarvam-CLI
 
 MUTED='\033[0;2m'
 RED='\033[0;31m'
@@ -10,20 +11,19 @@ NC='\033[0m' # No Color
 
 usage() {
     cat <<EOF
-OpenCode Installer
+Sarvam CLI Installer
 
 Usage: install.sh [options]
 
 Options:
     -h, --help              Display this help message
-    -v, --version <version> Install a specific version (e.g., 0.0.0-beta-17236)
+    -v, --version <version> Install a specific version (e.g., 2.1.4)
     -b, --binary <path>     Install from a local binary instead of downloading
         --no-modify-path    Don't modify shell config files (.zshrc, .bashrc, etc.)
 
 Examples:
-    curl -fsSL https://opencode.ai/v2/install | bash
-    curl -fsSL https://opencode.ai/v2/install | bash -s -- --version 0.0.0-beta-17236
-    ./install --binary /path/to/opencode
+    ./install --binary /path/to/sarvam-cli
+    ./install --version 2.1.4
 EOF
 }
 
@@ -66,7 +66,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-INSTALL_DIR=$HOME/.opencode/bin
+INSTALL_DIR=$HOME/.sarvam-cli/bin
 mkdir -p "$INSTALL_DIR"
 
 # If --binary is provided, skip all download/detection logic
@@ -174,42 +174,39 @@ else
         exit 1
     fi
 
-    package_scope="@opencode"
+    # Sarvam-CLI ships GitHub Release assets rather than npm packages. Asset
+    # naming is produced by script/archive-release.sh — keep the two in sync.
     if [ -z "$requested_version" ]; then
-        metadata=$(curl -fsSL https://opencode.ai/update/api/latest/cli/npm || true)
-        specific_version=$(echo "$metadata" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p')
-        package=$(echo "$metadata" | sed -n 's/.*"package":"\([^"]*\)".*/\1/p')
-
-        if [ -z "$specific_version" ] || [ -z "$package" ]; then
+        specific_version=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
+            | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p')
+        if [ -z "$specific_version" ]; then
             echo -e "${RED}Failed to fetch version information${NC}"
+            echo -e "${MUTED}Available releases: https://github.com/$REPO/releases${NC}"
             exit 1
         fi
-        package_scope="${package%/cli}"
     else
         # Strip leading 'v' if present
         requested_version="${requested_version#v}"
         specific_version=$requested_version
+        http_status=$(curl -sI -o /dev/null -w "%{http_code}" "https://github.com/$REPO/releases/tag/v${specific_version}" || true)
+        if [ "$http_status" = "404" ]; then
+            echo -e "${RED}Error: Release v${specific_version} not found${NC}"
+            echo -e "${MUTED}Available releases: https://github.com/$REPO/releases${NC}"
+            exit 1
+        fi
     fi
 
-    package_name="$package_scope/cli-$target"
-    http_status=$(curl -s -o /dev/null -w "%{http_code}" "https://registry.npmjs.org/$package_scope%2fcli-$target/$specific_version" || true)
-    # Older clients install the minimum release before they can migrate package names.
-    if [ "$http_status" = "404" ] && [ -n "$requested_version" ]; then
-        package_name="@opencode-ai/cli-$target"
-        http_status=$(curl -s -o /dev/null -w "%{http_code}" "https://registry.npmjs.org/@opencode-ai%2fcli-$target/$specific_version" || true)
+    if [ "$os" = "linux" ]; then
+        filename="opencode-$target.tar.gz"
+    else
+        filename="opencode-$target.zip"
+        if ! command -v unzip >/dev/null 2>&1; then
+            echo -e "${RED}Error: 'unzip' is required but not installed.${NC}"
+            exit 1
+        fi
     fi
-    if [ "$http_status" = "404" ]; then
-        echo -e "${RED}Error: Version ${specific_version} is not available for $target${NC}"
-        echo -e "${MUTED}Available versions: https://www.npmjs.com/package/$package_name?activeTab=versions${NC}"
-        exit 1
-    fi
-    if [ "$http_status" != "200" ]; then
-        echo -e "${RED}Failed to fetch package information${NC}"
-        exit 1
-    fi
+    url="https://github.com/$REPO/releases/download/v${specific_version}/$filename"
 
-    filename="cli-$target-$specific_version.tgz"
-    url="https://registry.npmjs.org/$package_name/-/$filename"
     binary_name="$SOURCE_APP"
     if [ "$os" = "windows" ]; then
         binary_name="$SOURCE_APP.exe"
@@ -306,7 +303,7 @@ download_with_progress() {
 
 download_and_install() {
     print_message info "\n${MUTED}Installing ${NC}$APP ${MUTED}version: ${NC}$specific_version"
-    local tmp_dir="${TMPDIR:-/tmp}/opencode_install_$$"
+    local tmp_dir="${TMPDIR:-/tmp}/sarvam_cli_install_$$"
     mkdir -p "$tmp_dir"
 
     if [[ "$os" == "windows" ]] || ! [ -t 2 ] || ! download_with_progress "$url" "$tmp_dir/$filename"; then
@@ -314,12 +311,16 @@ download_and_install() {
         curl -f -# -L -o "$tmp_dir/$filename" "$url"
     fi
 
-    tar -xzf "$tmp_dir/$filename" -C "$tmp_dir"
+    if [[ "$filename" == *.zip ]]; then
+        unzip -q "$tmp_dir/$filename" -d "$tmp_dir"
+    else
+        tar -xzf "$tmp_dir/$filename" -C "$tmp_dir"
+    fi
     local installed_binary="$APP"
     if [ "$os" = "windows" ]; then
         installed_binary="$APP.exe"
     fi
-    mv "$tmp_dir/package/bin/$binary_name" "$INSTALL_DIR/$installed_binary"
+    mv "$tmp_dir/$binary_name" "$INSTALL_DIR/$installed_binary"
     chmod 755 "$INSTALL_DIR/$installed_binary"
     rm -rf "$tmp_dir"
 }
@@ -334,6 +335,8 @@ install_from_binary() {
     chmod 755 "$INSTALL_DIR/$installed_binary"
 }
 
+# Installs the short `sarvam` alias alongside `sarvam-cli`, matching the two
+# bin entries the npm and pip wrappers expose.
 install_legacy_shim() {
     local shim_os="${os:-}"
     if [[ -z "$shim_os" ]]; then
@@ -341,20 +344,20 @@ install_legacy_shim() {
             MINGW*|MSYS*|CYGWIN*) shim_os="windows" ;;
         esac
     fi
-    rm -f "$INSTALL_DIR/opencode2" "$INSTALL_DIR/opencode2.exe" "$INSTALL_DIR/opencode2.cmd"
+    rm -f "$INSTALL_DIR/sarvam" "$INSTALL_DIR/sarvam.exe" "$INSTALL_DIR/sarvam.cmd"
     if [[ "$shim_os" == "windows" ]]; then
-        cat > "$INSTALL_DIR/opencode2.cmd" <<'EOF'
+        cat > "$INSTALL_DIR/sarvam.cmd" <<'EOF'
 @echo off
-"%~dp0opencode.exe" %*
+"%~dp0sarvam-cli.exe" %*
 exit /b %errorlevel%
 EOF
         return
     fi
-    cat > "$INSTALL_DIR/opencode2" <<'EOF'
+    cat > "$INSTALL_DIR/sarvam" <<'EOF'
 #!/bin/sh
-exec "$(dirname "$0")/opencode" "$@"
+exec "$(dirname "$0")/sarvam-cli" "$@"
 EOF
-    chmod 755 "$INSTALL_DIR/opencode2"
+    chmod 755 "$INSTALL_DIR/sarvam"
 }
 
 if [ -n "$binary_path" ]; then
@@ -465,20 +468,19 @@ if [ -n "${GITHUB_ACTIONS-}" ] && [ "${GITHUB_ACTIONS}" == "true" ]; then
 fi
 
 echo -e ""
-echo -e "${MUTED}                    ${NC}             ▄     "
-echo -e "${MUTED}█▀▀█ █▀▀█ █▀▀█ █▀▀▄ ${NC}█▀▀▀ █▀▀█ █▀▀█ █▀▀█"
-echo -e "${MUTED}█░░█ █░░█ █▀▀▀ █░░█ ${NC}█░░░ █░░█ █░░█ █▀▀▀"
-echo -e "${MUTED}▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀  ▀ ${NC}▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀"
+echo -e "${MUTED}█▀▀▀▀ █▀▀▀█ █▀▀▀█ █   █ █▀▀▀█ █▄ ▄█ ${NC}█▀▀▀▀ █     ▀▀█▀▀"
+echo -e "${MUTED}▀▀▀▀█ █▀▀▀█ █▀▀█  █   █ █▀▀▀█ █ ▀ █ ${NC}█     █       █  "
+echo -e "${MUTED}▀▀▀▀▀ █   █ █  ▀█  ▀▀▀  █   █ █   █ ${NC}▀▀▀▀▀ ▀▀▀▀▀ ▀▀▀▀▀"
 echo -e ""
 echo -e ""
-echo -e "${MUTED}OpenCode includes free models, to start:${NC}"
+echo -e "${MUTED}Sarvam CLI defaults to sarvam/sarvam-m, to start:${NC}"
 echo -e ""
 if [[ $path_added == "true" ]]; then
     echo -e "exec \$SHELL   ${MUTED}# Reload PATH (or open a new terminal)${NC}"
 fi
 echo -e "cd <project>  ${MUTED}# Open directory${NC}"
-echo -e "opencode      ${MUTED}# Run command${NC}"
+echo -e "sarvam-cli    ${MUTED}# Run command${NC}"
 echo -e ""
-echo -e "${MUTED}For more information visit ${NC}https://opencode.ai/v2/docs"
+echo -e "${MUTED}For more information visit ${NC}https://github.com/$REPO"
 echo -e ""
 echo -e ""

@@ -8,6 +8,7 @@ import { State } from "./state.js"
 import { Location } from "./location.js"
 import { freeze } from "immer"
 import { AISDKNative } from "./aisdk-native.js"
+import { SARVAM_DEFAULT_MODEL_ID, SARVAM_FALLBACK_CHAIN, SARVAM_PROVIDER_ID } from "@opencode/util/sarvam"
 
 export const ID = Model.ID
 export type ID = typeof ID.Type
@@ -264,7 +265,17 @@ const layer = Layer.effect(
       transform: (update) => prepare.pipe(Effect.andThen(state.transform(update))),
       reload,
       get: Effect.fn("Model.get")((providerID, modelID) =>
-        read().pipe(Effect.map((value) => value.byProvider.get(providerID)?.get(modelID))),
+        read().pipe(
+          Effect.map((value) => {
+            const models = value.byProvider.get(providerID)
+            const model = models?.get(modelID)
+            if (model || !isSarvam(providerID)) return model
+            // Sarvam is the baked-in default: rather than leave an agentic loop
+            // without a model when an unknown Sarvam id is requested, degrade to
+            // the first available sibling.
+            return sarvamFallback(models)
+          }),
+        ),
       ),
       all: Effect.fn("Model.all")(() => read().pipe(Effect.map((value) => value.all))),
       available: Effect.fn("Model.available")(() => read().pipe(Effect.map((value) => value.available))),
@@ -272,7 +283,14 @@ const layer = Layer.effect(
         const value = yield* read()
         const requested = value.data.defaultModel
         const model = requested && value.byProvider.get(requested.providerID)?.get(requested.modelID)
-        return model?.enabled ? model : value.available.find(supportsText)
+        if (model?.enabled) return model
+        // Sarvam is the baked-in default: with nothing configured, prefer
+        // sarvam/sarvam-m over generic catalog ordering. An explicit config
+        // `model` still wins above, so this is only the zero-config floor.
+        const sarvam = value.available.find(
+          (item) => isSarvam(item.providerID) && item.id === SARVAM_DEFAULT_MODEL_ID && supportsText(item),
+        )
+        return sarvam ?? value.available.find(supportsText)
       }),
       small: Effect.fn("Model.small")(function* (providerID) {
         const value = yield* read()
@@ -283,6 +301,13 @@ const layer = Layer.effect(
             model.capabilities.input.some((item) => item.startsWith("text")) &&
             model.capabilities.output.some((item) => item.startsWith("text")),
         )
+        // Sarvam is the baked-in default: its small model is always sarvam-m.
+        // Sarvam's catalog entries carry no `family`, so the family table below
+        // would never match one.
+        if (isSarvam(providerID)) {
+          const small = models.find((model) => model.id === SARVAM_DEFAULT_MODEL_ID)
+          if (small) return small
+        }
         return ["gpt-luna", "gemini-flash-lite", "gemini-flash", "claude-haiku"].flatMap(
           (family) => models.find((model) => model.family === family) ?? [],
         )[0]
@@ -309,6 +334,21 @@ function preferFree(models: Info[]) {
   if (!freeOnly) return models
   const picks = PREFERRED_FREE.flatMap((id) => models.find((model) => model.id === id) ?? [])
   return [...picks, ...models.filter((model) => !picks.includes(model))]
+}
+
+/** Matches `sarvam` and any variant provider id derived from it. */
+function isSarvam(providerID: Provider.ID) {
+  return String(providerID).startsWith(SARVAM_PROVIDER_ID)
+}
+
+/** First model along SARVAM_FALLBACK_CHAIN (smallest → largest) that exists. */
+function sarvamFallback(models: ReadonlyMap<ID, Info> | undefined) {
+  if (!models) return undefined
+  for (const id of SARVAM_FALLBACK_CHAIN) {
+    const model = models.get(ID.make(id))
+    if (model) return model
+  }
+  return undefined
 }
 
 export function supportsText(model: Pick<Info, "capabilities">) {

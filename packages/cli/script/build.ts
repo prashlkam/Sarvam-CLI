@@ -16,6 +16,9 @@ import { NativeArch } from "../../../script/native-arch"
 
 const dir = path.resolve(import.meta.dirname, "..")
 const binary = "opencode"
+// Target/artifact naming stays upstream (`opencode-<os>-<arch>`); only the
+// compiled executable is renamed, which is what install/npm/pip look for.
+const executable = "sarvam-cli"
 const outdir = path.resolve(
   dir,
   process.argv.find((arg) => arg.startsWith("--outdir="))?.slice("--outdir=".length) ?? "dist",
@@ -178,7 +181,7 @@ export default { path: file, version: ${JSON.stringify(opencodePty.version)}, sh
       autoloadPackageJson: true,
       target: target.replace(binary, "bun") as Bun.Build.CompileTarget,
       ...(executablePath ? { executablePath } : {}),
-      outfile: path.join(outdir, name, "bin", binary),
+      outfile: path.join(outdir, name, "bin", executable),
       execArgv: [
         "--smol",
         `--user-agent=opencode/${Script.channel}/${Script.version}/cli`,
@@ -190,7 +193,7 @@ export default { path: file, version: ${JSON.stringify(opencodePty.version)}, sh
     },
     define: {
       OPENCODE_VERSION: `'${Script.version}'`,
-      OPENCODE_CLI_NAME: "'opencode'",
+      OPENCODE_CLI_NAME: "'sarvam-cli'",
       OPENCODE_CHANNEL: `'${Script.channel}'`,
       OPENCODE_ARTIFACT: `'cli'`,
       ...(highlights ? { OPENCODE_RELEASE_HIGHLIGHTS: JSON.stringify(highlights) } : {}),
@@ -206,7 +209,7 @@ export default { path: file, version: ${JSON.stringify(opencodePty.version)}, sh
     process.exit(1)
   }
   verifySimulationGraph(simulationInputs)
-  await NativeArch.verify(path.join(outdir, name, "bin", item.os === "win32" ? `${binary}.exe` : binary), item.arch)
+  await NativeArch.verify(path.join(outdir, name, "bin", item.os === "win32" ? `${executable}.exe` : executable), item.arch)
 
   await Bun.write(
     path.join(outdir, name, "package.json"),

@@ -126,9 +126,9 @@ async function publishDistribution(input: {
 await publishDistribution({
   root,
   name: pkg.name,
-  command: "opencode",
+  command: "sarvam-cli",
   legacyCommand: "opencode2",
-  binary: "opencode",
+  binary: "sarvam-cli",
   packagePrefix: "@opencode/cli-",
   artifact: "cli",
 })

@@ -787,6 +787,20 @@ describe("ModelsDevPlugin", () => {
           ],
           connections: [],
         }),
+        // Sarvam is baked into the catalog by withSarvam, so it is registered
+        // with env-key auth regardless of what the models.dev fixture contains.
+        Integration.Info.make({
+          id: Integration.ID.make("sarvam"),
+          name: "Sarvam AI",
+          methods: [
+            { type: "key" },
+            {
+              type: "env",
+              names: ["SARVAM_API_KEY"],
+            },
+          ],
+          connections: [],
+        }),
       ])
     }).pipe(Effect.provide(models(path.join(import.meta.dir, "fixtures", "models-dev.json")))),
   )

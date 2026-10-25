@@ -1,6 +1,7 @@
 import { intro, log, outro, select, spinner, text } from "@clack/prompts"
 import { Effect, Option } from "effect"
 import type { FormAnswer, IntegrationInfo, OpenCodeClient } from "@opencode/client"
+import { SARVAM_DASHBOARD_URL, SARVAM_PROVIDER_ID } from "@opencode/util/sarvam"
 import { Commands } from "../../commands"
 import { Runtime } from "../../../framework/runtime"
 import { selectIntegration, type IntegrationChoice } from "../../../ui/integration-picker"
@@ -17,13 +18,21 @@ import {
   type ConnectMethod,
 } from "./shared"
 
+// Sarvam leads: sarvam-cli is Sarvam-first, so it is the recommended pick.
 const integrationPriority = new Map([
-  ["opencode-go", 0],
-  ["opencode", 1],
-  ["openai", 2],
-  ["github-copilot", 3],
-  ["anthropic", 4],
-  ["google", 5],
+  [SARVAM_PROVIDER_ID, 0],
+  ["opencode-go", 1],
+  ["opencode", 2],
+  ["openai", 3],
+  ["github-copilot", 4],
+  ["anthropic", 5],
+  ["google", 6],
+])
+
+const integrationHint = new Map([
+  [SARVAM_PROVIDER_ID, "recommended"],
+  ["opencode-go", "free models"],
+  ["opencode", "free models"],
 ])
 
 export default Runtime.handler(
@@ -96,6 +105,7 @@ export function loginChoices(integrations: IntegrationInfo[]): IntegrationChoice
             ? "Popular"
             : "Services",
       connected: integration.connections.length > 0,
+      ...(integrationHint.has(integration.id) ? { hint: integrationHint.get(integration.id) } : {}),
     }))
 }
 
@@ -152,6 +162,7 @@ const keyLogin = Effect.fn("cli.auth.login.key")(function* (
   method: Extract<ConnectMethod, { type: "key" }>,
   answer?: FormAnswer,
 ) {
+  if (integration.id === SARVAM_PROVIDER_ID) log.info(`Create an API key (sk_...) at ${SARVAM_DASHBOARD_URL}`)
   const key = yield* secret(method.label ?? `Enter your ${integration.name} API key`)
   const progress = spinner()
   progress.start("Saving credential...")

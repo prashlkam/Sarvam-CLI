@@ -8,6 +8,10 @@ import path from "node:path"
 import { OPENCODE_VERSION } from "../src/version"
 import { isolatedEnv } from "./fixture/environment"
 
+// The fork renames the XDG app directory (packages/util/src/global.ts), so the
+// paths these tests plant registrations at must follow it.
+const app = "sarvam-cli"
+
 // Real `serve --service` processes driven by the real CLI commands and client. Only behavior that
 // needs real processes lives here; the client's lifecycle decisions are covered by fixture tests in
 // packages/client/test. Every case ends with exactly one live server, registered and answering on
@@ -117,7 +121,7 @@ serviceTest(
       (error: Error) => error.message,
     )
     expect(conflict).toContain(`Managed service port ${home.port} on 127.0.0.1 is already in use by another process`)
-    expect(conflict).toContain("opencode service set port <port>")
+    expect(conflict).toContain("sarvam-cli service set port <port>")
     expect(await servers(home)).toEqual([])
     expect(await Bun.file(home.registration).exists()).toBe(false)
 
@@ -187,7 +191,7 @@ async function serviceHome(options: { readonly failBoot?: boolean } = {}) {
     root,
     port,
     entry: homeEntry,
-    registration: path.join(root, "state", "opencode", "service-local.json"),
+    registration: path.join(root, "state", app, "service-local.json"),
     env: Object.fromEntries(
       Object.entries(isolatedEnv(root, overrides)).filter((entry): entry is [string, string] => entry[1] !== undefined),
     ),

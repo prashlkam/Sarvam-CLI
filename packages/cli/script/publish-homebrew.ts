@@ -97,7 +97,7 @@ await Bun.write(
     "  end",
     "",
     "  def install",
-    '    bin.install "opencode"',
+    '    bin.install "sarvam-cli"',
     "  end",
     "end",
     "",

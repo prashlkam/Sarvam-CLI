@@ -21,7 +21,9 @@ describe("debug config command", () => {
   test("prints config entries from the invoking directory without reordering permissions", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-debug-config-"))
     const project = path.join(import.meta.dir, "..")
-    const registration = path.join(root, "state", "opencode", "service-local.json")
+    // Must match the XDG app directory the fork renames to (packages/util/src/global.ts);
+    // otherwise the CLI misses this mock registration and reads the real config.
+    const registration = path.join(root, "state", "sarvam-cli", "service-local.json")
     const entries = [
       {
         type: "document",

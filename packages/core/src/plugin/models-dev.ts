@@ -4,7 +4,7 @@ import { Provider } from "@opencode/schema/provider"
 import { Effect, Stream } from "effect"
 import { Bus } from "../bus.js"
 import { Model } from "../model.js"
-import { ModelsDev } from "../models-dev.js"
+import { ModelsDev, withSarvam } from "../models-dev.js"
 
 // These catalog entries require inference profiles on Bedrock Runtime.
 // Opus/Sonnet 4.6 and Opus 5.5 support in-region calls in eu-west-2 and must remain available.
@@ -90,7 +90,9 @@ const prepared = new WeakMap<readonly ModelsDev.Snapshot[], readonly ModelsDev.S
 function snapshots(data: readonly ModelsDev.Snapshot[]) {
   const cached = prepared.get(data)
   if (cached) return cached
-  const result = data
+  // Sarvam is baked in, so it joins the catalog before filtering — the
+  // prepared cache keeps the merged identity stable per input array.
+  const result = withSarvam(data)
     .filter(
       // These deprecated aliases are replaced by the canonical Azure and Google Vertex providers.
       (provider) => provider.info.id !== "azure-cognitive-services" && provider.info.id !== "google-vertex-anthropic",
