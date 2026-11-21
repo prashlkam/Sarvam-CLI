@@ -336,10 +336,14 @@ ok "Binary runs: $VER_OUT"
 # zero-config default model must resolve to sarvam/sarvam-m
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-MODEL_OUT="$(XDG_CONFIG_HOME="$TMP/c" XDG_DATA_HOME="$TMP/d" XDG_STATE_HOME="$TMP/s" XDG_CACHE_HOME="$TMP/h" \
-  OPENCODE_DISABLE_PROJECT_CONFIG=1 OPENCODE_DISABLE_MODELS_FETCH=1 SARVAM_API_KEY="sk_smoke_dummy" \
-  timeout 90 "$BIN" run "ping" 2>&1 || true)"
-if echo "$MODEL_OUT" | grep -q "sarvam-m"; then
+# `doctor` prints the resolved default model; `run` now fails on the dummy key
+# before naming one. Both start a managed service in the sandbox, so stop it
+# before the sandbox is deleted.
+smoke_env=(XDG_CONFIG_HOME="$TMP/c" XDG_DATA_HOME="$TMP/d" XDG_STATE_HOME="$TMP/s" XDG_CACHE_HOME="$TMP/h"
+  OPENCODE_DISABLE_PROJECT_CONFIG=1 OPENCODE_DISABLE_MODELS_FETCH=1 SARVAM_API_KEY="sk_smoke_dummy")
+MODEL_OUT="$(env "${smoke_env[@]}" timeout 90 "$BIN" doctor 2>&1 || true)"
+env "${smoke_env[@]}" timeout 30 "$BIN" service stop >/dev/null 2>&1 || true
+if echo "$MODEL_OUT" | grep -q "Default model: sarvam/sarvam-m"; then
   ok "Zero-config default model resolves to sarvam-m."
 else
   warn "Could not confirm the zero-config default model (sarvam-m) from the smoke run."
