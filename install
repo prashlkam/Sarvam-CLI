@@ -414,10 +414,10 @@ add_to_path() {
     if grep -Fxq "$command" "$config_file"; then
         print_message info "Command already exists in $config_file, skipping write."
     elif [[ -w $config_file ]]; then
-        echo -e "\n# opencode" >> "$config_file"
+        echo -e "\n# sarvam-cli" >> "$config_file"
         echo "$command" >> "$config_file"
         path_added=true
-        print_message info "${MUTED}Successfully added ${NC}opencode ${MUTED}to \$PATH in ${NC}$config_file"
+        print_message info "${MUTED}Successfully added ${NC}$APP ${MUTED}to \$PATH in ${NC}$config_file"
     else
         print_message warning "Manually add the directory to $config_file (or similar):"
         print_message info "  $command"
@@ -458,7 +458,7 @@ if [[ "$no_modify_path" != "true" ]]; then
         fi
     done
 
-    # A new Mac has no ~/.zshrc, so create the shell's main config file rather than leaving opencode off PATH.
+    # A new Mac has no ~/.zshrc, so create the shell's main config file rather than leaving sarvam-cli off PATH.
     if [[ -z $config_file ]]; then
         case $current_shell in
             zsh) new_config_file="${ZDOTDIR:-$HOME}/.zshrc" ;;
